@@ -41,16 +41,26 @@ class ANNetwork():
         num_input = input_dataset.shape[0]
 
         # Add ones to first column to account for bias weight 
-        _input_dataset = np.insert(input_dataset, 0, values=np.ones(num_input), axis=1)
+        _input_dataset = 0
+
+        if (self._bias):
+            _input_dataset = np.insert(input_dataset, 0, values=np.ones(num_input), axis=1)
+        else:
+            _input_dataset = input_dataset
 
         z = []
         a = [_input_dataset]
 
         for i in range(self._hidden_layers + 1):
             z.append(a[i] * self._parameters[i].T)
-            a.append(np.insert(self.Sigmoid(z[i]), 0, values=np.ones(z[i].shape[0]), axis=1))
+            if (self._bias):
+                a.append(np.insert(self.Sigmoid(z[i]), 0, values=np.ones(z[i].shape[0]), axis=1))
+            else:
+                a.append(self.Sigmoid(z[i]))
 
-        a[-1] = np.delete(a[self._hidden_layers+1], 0, axis=1)
+        if(self._bias):
+            a[-1] = np.delete(a[self._hidden_layers+1], 0, axis=1)
+
         return a, z
 
     def Cost(self, input_dataset, true_output_data):
@@ -84,8 +94,9 @@ class ANNetwork():
         deltas.insert(0,0)
 
         # To satisfy matrix multiplication given bias units do not have input from previous layers
-        for i in range(len(z)-1):
-            z[i] = np.insert(z[i], 0, values = np.ones(z[i].shape[0]), axis = 1)
+        if(self._bias):
+            for i in range(len(z)-1):
+                z[i] = np.insert(z[i], 0, values = np.ones(z[i].shape[0]), axis = 1)
 
         # Compute last layer delta
         deltas.append(np.multiply(a[-1] - true_output_data, self.SigmoidPrime(z[-1])))
@@ -97,19 +108,19 @@ class ANNetwork():
         # Compute delta for preceding layers
         for j in range(self._hidden_layers-1, 0, -1):
 
-            print("PARAMETERS J")
-            print(self._parameters[j])
-            print("DELTAS J + 1")
-            print(deltas[j + 1])
-            print("DELTAS J + 1 [:,1:]")
-            print(deltas[j + 1][:,1:])
-            print("Z MATRIX")
-            print(z[j-1])
+            # print("PARAMETERS J")
+            # print(self._parameters[j])
+            # print("DELTAS J + 1")
+            # print(deltas[j + 1])
+            # print("DELTAS J + 1 [:,1:]")
+            # print(deltas[j + 1][:,self._bias:])
+            # print("Z MATRIX")
+            # print(z[j-1])
 
-            deltas[j] = np.multiply((self._parameters[j].T * deltas[j + 1][:,1:].T).T, self.SigmoidPrime(z[j-1]))
+            deltas[j] = np.multiply((self._parameters[j].T * deltas[j + 1][:,self._bias:].T).T, self.SigmoidPrime(z[j-1]))
 
-            print("DELTAS J")
-            print(deltas[j])
+            # print("DELTAS J")
+            # print(deltas[j])
 
         acc_deltas[-1] = (deltas[-1].T * a[-2]) / n_training_examples
 
@@ -118,8 +129,8 @@ class ANNetwork():
             # print(deltas[j+1])
             # print("A[%u]" % j)
             # print(a[j])
-            acc_deltas[j] = (deltas[j+1][:,1:].T * a[j] ) / n_training_examples
-            print(acc_deltas[j])
+            acc_deltas[j] = (deltas[j+1][:,self._bias:].T * a[j] ) / n_training_examples
+            # print(acc_deltas[j])
             # print("ACCUM " + str(j))
             # print(acc_deltas[j])
 
@@ -156,7 +167,10 @@ class ANNetwork():
         self.Plot_Error_Vs_Training_Epoch(n_iterations)
 
         final_a, final_z = self.ForwardPropogate(input_dataset)
+
+        print("Final Output")
         print(final_a[-1])
+        print("Expected Output")
         print(output_dataset)
         print("ERROR: ")
         print(abs(np.sum(final_a[-1] - output_dataset)) / output_dataset.shape[0])
@@ -183,7 +197,7 @@ if __name__ == '__main__':
     #   print(a[i])
     # NN.Cost(test_input_data, test_true_output)
 
-    # OR Neural Network Test
+    # XOR Neural Network Test
 
     input_dataset = np.matrix([
         [1, 0], 
@@ -194,19 +208,20 @@ if __name__ == '__main__':
     
     output_dataset = np.matrix([
         [1],
-        [1],
+        [0],
         [0],
         [1]
     ])
 
-    XOR_NN = ANNetwork(0.1, 2, 2, 1, 1)
+    XOR_NN = ANNetwork(2.5, 2, 2, 2, 1)
     XOR_NN.Train(input_dataset, output_dataset, 10000)
 
     p = XOR_NN.Predict(np.matrix([1,0]))
     p2 = XOR_NN.Predict(np.matrix([1,1]))
     p3 = XOR_NN.Predict(np.matrix([0,0]))
     p4 = XOR_NN.Predict(np.matrix([0,1]))
-    print(p)
-    print(p2)
-    print(p3)
-    print(p4)
+
+    print("Predicted [1,0],  got " + str(p))
+    print("Predicted [1,1],  got " + str(p2))
+    print("Predicted [0,0],  got " + str(p3))
+    print("Predicted [0,1],  got " + str(p4))
