@@ -3,7 +3,7 @@
 
 <h1 align="center">Kokoro</h1>
 
-<p align="center">An artificial neural network module driven by [NumPy](https://github.com/numpy/numpy)</p>
+<p align="center">An artificial neural network module driven by <a href="https://github.com/numpy/numpy/" target="_blank">NumPy</a></p>
 
 <p align="center">
   <a href="https://travis-ci.org/KevinDaLam/kokoro"><img src="https://travis-ci.org/KevinDaLam/kokoro.svg?branch=master" alt="Build Status"></a>
