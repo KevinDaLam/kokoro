@@ -35,7 +35,7 @@ class ANNetwork():
     def RandomizeWeights(self):
 
         for i in range(self._hidden_layers + 1):
-            self._parameters[i] = np.matrix(np.random.rand(self._parameters[i].shape[0], self._parameters[i].shape[1]))
+            self._parameters[i] = np.matrix(np.random.rand(self._parameters[i].shape[0], self._parameters[i].shape[1])) - 0.5
 
     def ForwardPropogate(self, input_dataset):
 
@@ -48,10 +48,11 @@ class ANNetwork():
             _input_dataset = np.insert(input_dataset, 0, values=np.ones(num_input), axis=1)
         else:
             _input_dataset = input_dataset
+            
+        z = [] # Before activation function
+        a = [_input_dataset] # First layer is 
 
-        z = []
-        a = [_input_dataset]
-
+        # Forward propogate z and a layers
         for i in range(self._hidden_layers + 1):
             z.append(a[i] * self._parameters[i].T)
             if (self._bias):
@@ -71,14 +72,11 @@ class ANNetwork():
         a, z = self.ForwardPropogate(input_dataset)
 
         total_cost = 0
+        #First term applies when true output = 1, second term applies when true output = 0
         for i in range(n_training_examples):
             first_term = np.multiply(true_output_data[i,:], np.log(a[-1][i,:]))
             second_term = np.multiply(1 - true_output_data[i,:], np.log(1 - a[-1][i,:]))
             total_cost += np.sum(first_term + second_term)
-
-        # first_term = np.multiply(true_output_data, np.log(a[-1]))
-        # second_term = np.multiply(1 - true_output_data, np.log(1 - a[-1]))
-        # total_cost = np.sum(first_term + second_term)
 
         total_cost = -total_cost / n_training_examples
         return total_cost
@@ -109,6 +107,7 @@ class ANNetwork():
         # Compute delta for preceding layers
         for j in range(self._hidden_layers-1, 0, -1):
 
+            # #Print for Debugging Matrices
             # print("PARAMETERS J")
             # print(self._parameters[j])
             # print("DELTAS J + 1")
@@ -135,7 +134,7 @@ class ANNetwork():
             # print("ACCUM " + str(j))
             # print(acc_deltas[j])
 
-        # # Regularization
+        # #TODO: Check Regularization
         # for i in range(len(acc_deltas)):
         #     acc_deltas[i][:,1:] = acc_deltas[i][:,1:] + (self._parameters[i][:,1:] * 0.01) / n_training_examples
 
@@ -164,9 +163,9 @@ class ANNetwork():
         for i in range(n_iterations):
             a, z = self.ForwardPropogate(input_dataset)
             self.BackPropogate(a, z, output_dataset)
-            self._cost[i] = (self.Cost(input_dataset, output_dataset))
             print("ITERATION: " + str(i))
-            print(a[-1])
+            self._cost[i] = (self.Cost(input_dataset, output_dataset))
+
 
         self.Plot_Error_Vs_Training_Epoch(n_iterations)
 
@@ -177,55 +176,55 @@ class ANNetwork():
         print("Expected Output")
         print(output_dataset)
         print("ERROR: ")
-        print(abs(np.sum(final_a[-1] - output_dataset)) / output_dataset.shape[0])
+        print(np.sum(abs(final_a[-1] - output_dataset)) / output_dataset.shape[0])
 
     def Predict(self, input_data):
 
         predicted_a, predicted_z = self.ForwardPropogate(input_data)
         return predicted_a[-1]
 
+# # Run this module on its own to run simple tests below
+# if __name__ == '__main__':
 
-if __name__ == '__main__':
+#     # Test Neural Net with Learning Rate 0.01, Input Vector Size of 2, 2 Hidden Neurons in each Hidden Layer, 2 Hidden Layers, Output Vector Size of 2
+#     # NN = ANNetwork(0.01, 2, 2, 2, 2)
+#     # NN.RandomizeWeights()
+#     # test_input_data = np.matrix([[1,3],[1,2]])
+#     # test_true_output = np.matrix([[1, 0],[0,1]])
+#     # a, z = NN.ForwardPropogate(test_input_data)
+#     # for i in range(len(NN._parameters)):
+#     #   print("Theta Layer " + str(i))
+#     #   print(NN._parameters[i])
+#     # for i in range(len(a)):
+#     #   print("Activation Layer " + str(i))
+#     #   print(a[i])
+#     # NN.Cost(test_input_data, test_true_output)
 
-    # Test Neural Net with Learning Rate 0.01, Input Vector Size of 2, 2 Hidden Neurons in each Hidden Layer, 2 Hidden Layers, Output Vector Size of 2
-    # NN = ANNetwork(0.01, 2, 2, 2, 2)
-    # NN.RandomizeWeights()
-    # test_input_data = np.matrix([[1,3],[1,2]])
-    # test_true_output = np.matrix([[1, 0],[0,1]])
-    # a, z = NN.ForwardPropogate(test_input_data)
-    # for i in range(len(NN._parameters)):
-    #   print("Theta Layer " + str(i))
-    #   print(NN._parameters[i])
-    # for i in range(len(a)):
-    #   print("Activation Layer " + str(i))
-    #   print(a[i])
-    # NN.Cost(test_input_data, test_true_output)
+#     # XOR Neural Network Test
 
-    # XOR Neural Network Test
-
-    input_dataset = np.matrix([
-        [1, 0], 
-        [1, 1], 
-        [0, 0], 
-        [0, 1]
-    ])
+#     input_dataset = np.matrix([
+#         [1, 0], 
+#         [1, 1], 
+#         [0, 0], 
+#         [0, 1]
+#     ])
     
-    output_dataset = np.matrix([
-        [1],
-        [0],
-        [0],
-        [1]
-    ])
+#     output_dataset = np.matrix([
+#         [1],
+#         [0],
+#         [0],
+#         [1]
+#     ])
 
-    XOR_NN = ANNetwork(5, 2,  2, 1, 1)
-    XOR_NN.Train(input_dataset, output_dataset, 1000)
+#     XOR_NN = ANNetwork(2.5, 2, 2, 2, 1)
+#     XOR_NN.Train(input_dataset, output_dataset, 10000)
 
-    p = XOR_NN.Predict(np.matrix([1,0]))
-    p2 = XOR_NN.Predict(np.matrix([1,1]))
-    p3 = XOR_NN.Predict(np.matrix([0,0]))
-    p4 = XOR_NN.Predict(np.matrix([0,1]))
+#     p = XOR_NN.Predict(np.matrix([1,0]))
+#     p2 = XOR_NN.Predict(np.matrix([1,1]))
+#     p3 = XOR_NN.Predict(np.matrix([0,0]))
+#     p4 = XOR_NN.Predict(np.matrix([0,1]))
 
-    print("Predicted [1,0],  got " + str(p))
-    print("Predicted [1,1],  got " + str(p2))
-    print("Predicted [0,0],  got " + str(p3))
-    print("Predicted [0,1],  got " + str(p4))
+#     print("Predicted [1,0],  got " + str(p))
+#     print("Predicted [1,1],  got " + str(p2))
+#     print("Predicted [0,0],  got " + str(p3))
+#     print("Predicted [0,1],  got " + str(p4))
